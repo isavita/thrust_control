@@ -1,6 +1,7 @@
-import GameEngine from './gameEngine.js';
+import Phaser from '../lib/phaser.js';
+import GameEngine from '../game/GameEngine.js';
 
-class LandingScene extends Phaser.Scene {
+export default class LandingScene extends Phaser.Scene {
     constructor() {
         super('LandingScene');
     }
@@ -12,14 +13,13 @@ class LandingScene extends Phaser.Scene {
 
     create() {
         this.ground = this.add.tileSprite(400, 580, 800, 40, 'ground');
-        this.rocket = this.physics.add.sprite(400, 100, 'rocket').setScale(0.5); // Make the rocket smaller
+        this.rocket = this.physics.add.sprite(400, 100, 'rocket').setScale(0.5);
 
         this.rocket.setCollideWorldBounds(true);
         this.physics.add.collider(this.rocket, this.ground, this.landRocket, null, this);
 
         this.cursors = this.input.keyboard.createCursorKeys();
 
-        // Add touch controls for mobile
         this.input.on('pointerdown', this.startThrust, this);
         this.input.on('pointerup', this.stopThrust, this);
 
@@ -46,5 +46,3 @@ class LandingScene extends Phaser.Scene {
         this.gameEngine.landRocket(rocket, ground);
     }
 }
-
-export default LandingScene;
