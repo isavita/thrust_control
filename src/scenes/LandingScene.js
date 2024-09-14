@@ -10,17 +10,16 @@ export default class LandingScene extends Phaser.Scene {
         this.load.image('rocket', 'assets/rocket.png');
         this.load.image('ground', 'assets/ground.png');
         this.load.image('flame', 'assets/flame-low.png');
+        // If adding flame animation
+        // this.load.spritesheet('flame', 'assets/flame-animated.png', { frameWidth: 32, frameHeight: 32 });
     }
 
     create() {
         this.ground = this.add.tileSprite(400, 580, 800, 40, 'ground');
         this.rocket = this.physics.add.sprite(400, 100, 'rocket').setScale(0.5);
-        
-        // Calculate flame offset based on rocket's height
-        this.rocketFlameOffset = this.rocket.height / 3.5;
 
-        // Initialize flame sprite positioned below the rocket
-        this.flame = this.add.sprite(this.rocket.x, this.rocket.y + this.rocketFlameOffset, 'flame').setVisible(false);
+        // Center of the rocket sprite (assuming pivot is at center)
+        this.rocket.setOrigin(0.5, 0.5);
 
         this.rocket.setCollideWorldBounds(true);
         this.physics.add.collider(this.rocket, this.ground, this.landRocket, null, this);
@@ -32,23 +31,62 @@ export default class LandingScene extends Phaser.Scene {
         this.input.on('pointerup', this.stopThrust, this);
 
         this.gameEngine = new GameEngine(this);
+
+        // Add a flame sprite for thrust
+        this.flame = this.add.sprite(0, 0, 'flame').setVisible(false);
+        this.flame.setOrigin(0.5, 0); // Align top center of flame with rocket's base
+
+        // Optional: Add flame animation
+        /*
+        this.anims.create({
+            key: 'flameAnim',
+            frames: this.anims.generateFrameNumbers('flame', { start: 0, end: 3 }),
+            frameRate: 10,
+            repeat: -1
+        });
+        */
+
+        // Optional: Add fuel display
+        /*
+        this.fuelText = this.add.text(10, 10, 'Fuel: 1000', { font: '16px Arial', fill: '#ffffff' });
+        */
     }
 
     update() {
         // Determine if boost (Shift key) is active
         const boostActive = this.shiftKey.isDown;
 
-        // Show/flame is visible when boosting
+        // Show flame when boosting
         if (boostActive) {
             this.flame.setVisible(true);
-            this.flame.x = this.rocket.x;
-            this.flame.y = this.rocket.y + this.rocketFlameOffset;
+            // Calculate flame position based on rocket's angle and size
+            const flameOffset = {
+                x: Math.sin(Phaser.Math.DegToRad(this.rocket.angle)) * (this.rocket.height / 2),
+                y: Math.cos(Phaser.Math.DegToRad(this.rocket.angle)) * (this.rocket.height / 2)
+            };
+            this.flame.x = this.rocket.x + flameOffset.x;
+            this.flame.y = this.rocket.y + flameOffset.y;
+            this.flame.rotation = Phaser.Math.DegToRad(this.rocket.angle);
+            
+            // Play flame animation if implemented
+            // this.flame.play('flameAnim');
+
+            // Optional: Visual feedback (e.g., scaling)
+            this.rocket.setScale(0.505); // Slightly larger when boosting
         } else {
             this.flame.setVisible(false);
+            // Stop flame animation if implemented
+            // this.flame.stop();
+
+            // Reset scale when not boosting
+            this.rocket.setScale(0.5);
         }
 
         // Update rocket physics with the boost flag
         this.gameEngine.updateRocket(this.rocket, this.cursors, boostActive);
+
+        // Optional: Update fuel display
+        // this.fuelText.setText(`Fuel: ${this.gameEngine.fuel}`);
     }
 
     startThrust(pointer) {
