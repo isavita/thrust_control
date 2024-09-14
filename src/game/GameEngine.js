@@ -3,17 +3,28 @@ class GameEngine {
         this.scene = scene;
         this.gravity = 200;
         this.thrust = 300;
+        this.boost = 500;
         this.rocketLanded = false;
     }
 
-    updateRocket(rocket, cursors, input) {
+    /**
+     * Updates the rocket's physics based on input.
+     * @param {Phaser.Physics.Arcade.Sprite} rocket - The rocket sprite.
+     * @param {Phaser.Types.Input.Keyboard.CursorKeys} cursors - Cursor keys input.
+     * @param {boolean} boostActive - Indicates if boost is active.
+     */
+    updateRocket(rocket, cursors, boostActive) {
         if (this.rocketLanded) return;
 
-        rocket.setAccelerationY(this.gravity);
+        let currentThrust = this.thrust;
 
-        if (cursors.up.isDown || input.activePointer.isDown) {
-            rocket.setAccelerationY(this.gravity - this.thrust);
+        // Determine thrust based on boost status
+        if (boostActive) {
+            currentThrust = this.boost;
         }
+
+        // Apply upward acceleration (opposite to gravity)
+        rocket.setAccelerationY(this.gravity - currentThrust);
 
         // Rotate rocket based on horizontal movement
         if (cursors.left.isDown) {
