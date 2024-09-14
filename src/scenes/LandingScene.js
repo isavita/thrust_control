@@ -4,6 +4,7 @@ import GameEngine from '../game/GameEngine.js';
 export default class LandingScene extends Phaser.Scene {
     constructor() {
         super('LandingScene');
+        this.boostActive = false; // Initialize boostActive as a class property
     }
 
     preload() {
@@ -27,6 +28,7 @@ export default class LandingScene extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.shiftKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
 
+        // Pointer (mouse/touchpad) input handlers
         this.input.on('pointerdown', this.startThrust, this);
         this.input.on('pointerup', this.stopThrust, this);
 
@@ -54,10 +56,10 @@ export default class LandingScene extends Phaser.Scene {
 
     update() {
         // Determine if boost (Shift key) is active
-        const boostActive = this.shiftKey.isDown;
+        this.boostActive = this.shiftKey.isDown;
 
         // Show flame when boosting
-        if (boostActive) {
+        if (this.boostActive) {
             this.flame.setVisible(true);
             // Calculate flame position based on rocket's angle and size
             const flameOffset = {
@@ -83,13 +85,20 @@ export default class LandingScene extends Phaser.Scene {
         }
 
         // Update rocket physics with the boost flag
-        this.gameEngine.updateRocket(this.rocket, this.cursors, boostActive);
+        this.gameEngine.updateRocket(this.rocket, this.cursors, this.boostActive);
 
         // Optional: Update fuel display
         // this.fuelText.setText(`Fuel: ${this.gameEngine.fuel}`);
     }
 
+    /**
+     * Handles pointer (mouse/touchpad) down events to initiate thrust.
+     * Only applies rotation if boost is active.
+     * @param {Phaser.Input.Pointer} pointer
+     */
     startThrust(pointer) {
+        if (!this.boostActive) return; // Only rotate if boost is active
+
         if (pointer.x < this.game.config.width / 2) {
             this.rocket.setAngularVelocity(-150);
         } else {
@@ -97,7 +106,12 @@ export default class LandingScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * Handles pointer (mouse/touchpad) up events to stop thrust.
+     * Only stops rotation if boost is active.
+     */
     stopThrust() {
+        if (!this.boostActive) return; // Only stop rotation if boost is active
         this.rocket.setAngularVelocity(0);
     }
 
