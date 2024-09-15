@@ -17,9 +17,9 @@ export default class LandingScene extends Phaser.Scene {
 
     create() {
         this.ground = this.add.tileSprite(400, 580, 800, 40, 'ground');
-        this.rocket = this.physics.add.sprite(400, 100, 'rocket').setScale(0.5);
+        this.rocket = this.physics.add.sprite(400, 500, 'rocket').setScale(0.5);
 
-        // Center of the rocket sprite (assuming pivot is at center)
+        // Center of the rocket sprite (pivot at center)
         this.rocket.setOrigin(0.5, 0.5);
 
         this.rocket.setCollideWorldBounds(true);
@@ -35,8 +35,9 @@ export default class LandingScene extends Phaser.Scene {
         this.gameEngine = new GameEngine(this);
 
         // Add a flame sprite for thrust
-        this.flame = this.add.sprite(0, 0, 'flame').setVisible(false);
-        this.flame.setOrigin(0.5, 0); // Align top center of flame with rocket's base
+        this.flame = this.add.sprite(400, 500, 'flame').setScale(0.75).setVisible(true);
+        this.flame.setOrigin(0.5, 0.5);
+        this.flameOffset = 160;
 
         // Optional: Add flame animation
         /*
@@ -61,27 +62,24 @@ export default class LandingScene extends Phaser.Scene {
         // Show flame when boosting
         if (this.boostActive) {
             this.flame.setVisible(true);
-            // Calculate flame position based on rocket's angle and size
-            const flameOffset = {
-                x: Math.sin(Phaser.Math.DegToRad(this.rocket.angle)) * (this.rocket.height / 2),
-                y: Math.cos(Phaser.Math.DegToRad(this.rocket.angle)) * (this.rocket.height / 2)
-            };
-            this.flame.x = this.rocket.x + flameOffset.x;
-            this.flame.y = this.rocket.y + flameOffset.y;
-            this.flame.rotation = Phaser.Math.DegToRad(this.rocket.angle);
-            
-            // Play flame animation if implemented
-            // this.flame.play('flameAnim');
 
-            // Optional: Visual feedback (e.g., scaling)
-            this.rocket.setScale(0.505); // Slightly larger when boosting
+            // Convert rocket's angle from degrees to radians
+            const angle = Phaser.Math.DegToRad(this.rocket.angle);
+
+            // Set flame rotation to match the rocket's angle
+            this.flame.rotation = angle;
+
+            // Calculate the new position for the flame
+            this.flame.x = this.rocket.x + this.flameOffset * Math.sin(-angle);
+            this.flame.y = this.rocket.y + this.flameOffset * Math.cos(angle);
+            
+            // Slightly larger when boosting
+            this.rocket.setScale(Phaser.Math.Linear(this.rocket.scaleX, 0.52, 0.01));
         } else {
             this.flame.setVisible(false);
-            // Stop flame animation if implemented
-            // this.flame.stop();
 
             // Reset scale when not boosting
-            this.rocket.setScale(0.5);
+            this.rocket.setScale(Phaser.Math.Linear(this.rocket.scaleX, 0.5, 0.01));
         }
 
         // Update rocket physics with the boost flag
@@ -94,7 +92,7 @@ export default class LandingScene extends Phaser.Scene {
     /**
      * Handles pointer (mouse/touchpad) down events to initiate thrust.
      * Only applies rotation if boost is active.
-     * @param {Phaser.Input.Pointer} pointer
+     * @param {Phaser.Input.Pointer} pointer 
      */
     startThrust(pointer) {
         if (!this.boostActive) return; // Only rotate if boost is active
