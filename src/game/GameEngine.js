@@ -79,17 +79,45 @@ class GameEngine {
         // this.scene.fuelText.setText(`Fuel: ${this.fuel}`);
     }
 
-    landRocket(rocket, ground) {
-        if (rocket.body.velocity.y < 50 && Math.abs(rocket.angle) < 10) {
+    /**
+     * Determines the outcome of the landing.
+     * @param {Phaser.Physics.Arcade.Sprite} rocket 
+     * @param {Phaser.Physics.Arcade.Sprite} ground 
+     * @returns {string} - Returns 'success' or 'failure' based on landing conditions.
+     */
+    determineLandingOutcome(rocket, ground) {
+        if (this.rocketLanded) return 'already_landed';
+
+        // Determine the landing angle
+        const landingAngle = Math.abs(rocket.angle % 360);
+        const normalizedAngle = landingAngle > 180 ? 360 - landingAngle : landingAngle;
+
+        // Determine landing velocity
+        const velocityY = Math.abs(rocket.body.velocity.y);
+        const velocityX = Math.abs(rocket.body.velocity.x);
+        const maxLandingVelocity = 50; // Adjust as needed
+
+        // Accessing static properties from LandingScene
+        const maxLandingAngle = this.scene.constructor.MAX_LANDING_ANGLE;
+
+        if (
+            normalizedAngle <= maxLandingAngle &&
+            velocityY <= maxLandingVelocity &&
+            velocityX <= maxLandingVelocity
+        ) {
+            // Successful Landing
             this.rocketLanded = true;
             rocket.setVelocity(0);
             rocket.setAcceleration(0);
             rocket.setAngularVelocity(0);
             rocket.setAngle(0);
             console.log('Rocket landed successfully!');
+            return 'success';
         } else {
+            // Failed Landing
+            this.rocketLanded = true;
             console.log('Crash landing!');
-            this.scene.scene.restart();
+            return 'failure';
         }
     }
 }
